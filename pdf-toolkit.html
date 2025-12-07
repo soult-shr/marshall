@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Toolkit</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #141416;
+            --bg-tertiary: #1c1c1f;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-glow: rgba(59, 130, 246, 0.15);
+            --accent-secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border: #27272a;
+            --border-hover: #3f3f46;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            background-image: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, var(--accent-glow), transparent),
+                radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.05), transparent);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            border-radius: 14px;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.25);
+        }
+
+        .logo svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: var(--bg-secondary);
+            padding: 0.375rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .tab-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background: var(--bg-tertiary);
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .drop-zone.drag-over {
+            transform: scale(1.01);
+        }
+
+        .drop-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
+            opacity: 0.6;
+        }
+
+        .drop-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: var(--text-secondary);
+        }
+
+        .drop-text {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .drop-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .drop-hint span {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .file-info.visible {
+            display: flex;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .file-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: #ef4444;
+        }
+
+        .file-icon.image-icon {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .file-icon.image-icon svg {
+            fill: var(--accent-secondary);
+        }
+
+        .file-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .remove-file {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .remove-file:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .settings-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.5;
+        }
+
+        .settings-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .quality-control {
+            margin-bottom: 1.5rem;
+        }
+
+        .quality-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .quality-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .quality-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent);
+            background: var(--accent-glow);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+            transition: transform 0.15s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .quality-presets {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .preset-btn {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .preset-btn.active {
+            background: var(--accent-glow);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, var(--accent), #2563eb);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(59, 130, 246, 0.4);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .action-btn.merge-btn {
+            background: linear-gradient(135deg, var(--accent-secondary), #7c3aed);
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+        }
+
+        .action-btn.merge-btn:hover:not(:disabled) {
+            box-shadow: 0 6px 24px rgba(139, 92, 246, 0.4);
+        }
+
+        .result-card {
+            display: none;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.02));
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .result-card.visible {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .result-icon {
+            width: 24px;
+            height: 24px;
+            fill: var(--success);
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .size-comparison {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .size-box {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+        }
+
+        .size-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .size-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .size-arrow {
+            color: var(--text-muted);
+        }
+
+        .reduction-badge {
+            text-align: center;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.15);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--success);
+            margin-bottom: 1.25rem;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .download-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .download-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .progress-container.visible {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* Merge-specific styles */
+        .file-list {
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .file-list::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+
+        .file-list::-webkit-scrollbar-thumb {
+            background: var(--border-hover);
+            border-radius: 3px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            cursor: grab;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .file-item:hover {
+            border-color: var(--border-hover);
+        }
+
+        .file-item.dragging {
+            opacity: 0.5;
+            border-color: var(--accent);
+        }
+
+        .file-item.drag-over {
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .drag-handle {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 0.25rem;
+            cursor: grab;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+
+        .drag-handle:hover {
+            opacity: 0.8;
+        }
+
+        .drag-handle span {
+            display: block;
+            width: 12px;
+            height: 2px;
+            background: var(--text-secondary);
+            border-radius: 1px;
+        }
+
+        .file-item .file-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .file-item .file-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .file-item .file-details {
+            flex: 1;
+        }
+
+        .file-item .file-name {
+            font-size: 0.85rem;
+        }
+
+        .file-item .file-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .file-number {
+            width: 24px;
+            height: 24px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .file-count {
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .file-count strong {
+            color: var(--accent);
+        }
+
+        .merge-result-info {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            margin-bottom: 1.25rem;
+        }
+
+        .merge-result-info .pages-count {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .merge-result-info .pages-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .merge-result-info .file-size-info {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .add-more-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            background: transparent;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-more-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .add-more-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .clear-all-btn {
+            background: transparent;
+            border: none;
+            color: var(--danger);
+            font-size: 0.8rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .clear-all-btn:hover {
+            opacity: 1;
+        }
+
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+
+            .card {
+                padding: 1.25rem;
+            }
+
+            .drop-zone {
+                padding: 2rem 1.5rem;
+            }
+
+            .size-comparison {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .size-arrow {
+                transform: rotate(90deg);
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM9 17H7V10H9V17ZM13 17H11V7H13V17ZM17 17H15V13H17V17Z"/>
+                </svg>
+            </div>
+            <h1>PDF Toolkit</h1>
+            <p class="subtitle">Compress and merge your documents with ease</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="compress">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5V19M5 12H19" stroke-linecap="round"/>
+                </svg>
+                Compress
+            </button>
+            <button class="tab-btn" data-tab="merge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 6H16M8 10H16M8 14H11M13 18L16 15M16 15L13 12M16 15H8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Merge
+            </button>
+        </div>
+
+        <!-- Compress Tab -->
+        <div class="tab-content active" id="compress-tab">
+            <div class="card">
+                <div class="drop-zone" id="compressDropZone">
+                    <div class="drop-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+                            <path d="M12 16V4M12 4L8 8M12 4L16 8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3 16V18C3 19.1046 3.89543 20 5 20H19C20.1046 20 21 19.1046 21 18V16" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <p class="drop-text">Drag & drop your PDF here</p>
+                    <p class="drop-hint">or <span>browse</span> to select a file</p>
+                </div>
+                <input type="file" id="compressFileInput" accept=".pdf,application/pdf">
+                
+                <div class="file-info" id="compressFileInfo">
+                    <div class="file-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM16 18H8V16H16V18ZM16 14H8V12H16V14ZM13 9V3.5L18.5 9H13Z"/>
+                        </svg>
+                    </div>
+                    <div class="file-details">
+                        <div class="file-name" id="compressFileName">document.pdf</div>
+                        <div class="file-size" id="compressFileSize">2.4 MB</div>
+                    </div>
+                    <button class="remove-file" id="compressRemoveFile" title="Remove file">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6L18 18"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="settings-header">
+                    <svg class="settings-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                    </svg>
+                    <span class="settings-title">Compression Settings</span>
+                </div>
+
+                <div class="quality-control">
+                    <div class="quality-header">
+                        <span class="quality-label">Image Quality</span>
+                        <span class="quality-value" id="qualityValue">70%</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" id="qualitySlider" min="10" max="100" value="70">
+                    </div>
+                    <div class="quality-presets">
+                        <button class="preset-btn" data-value="30">Low</button>
+                        <button class="preset-btn" data-value="50">Medium</button>
+                        <button class="preset-btn active" data-value="70">High</button>
+                        <button class="preset-btn" data-value="90">Max</button>
+                    </div>
+                </div>
+
+                <button class="action-btn" id="compressBtn" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 9L12 16L5 9" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Compress PDF
+                </button>
+
+                <div class="progress-container" id="compressProgressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="compressProgressFill"></div>
+                    </div>
+                    <p class="progress-text" id="compressProgressText">Processing...</p>
+                </div>
+            </div>
+
+            <div class="card result-card" id="compressResultCard">
+                <div class="result-header">
+                    <svg class="result-icon" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <span class="result-title">Compression Complete</span>
+                </div>
+
+                <div class="size-comparison">
+                    <div class="size-box">
+                        <div class="size-label">Original</div>
+                        <div class="size-value" id="originalSize">0 KB</div>
+                    </div>
+                    <div class="size-arrow">→</div>
+                    <div class="size-box">
+                        <div class="size-label">Compressed</div>
+                        <div class="size-value" id="compressedSize">0 KB</div>
+                    </div>
+                </div>
+
+                <div class="reduction-badge" id="reductionBadge">
+                    ↓ 0% smaller
+                </div>
+
+                <button class="download-btn" id="compressDownloadBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 4V16M12 16L8 12M12 16L16 12" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M4 20H20" stroke-linecap="round"/>
+                    </svg>
+                    Download Compressed PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Merge Tab -->
+        <div class="tab-content" id="merge-tab">
+            <div class="card">
+                <div class="drop-zone" id="mergeDropZone">
+                    <div class="drop-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+                            <path d="M12 16V4M12 4L8 8M12 4L16 8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3 16V18C3 19.1046 3.89543 20 5 20H19C20.1046 20 21 19.1046 21 18V16" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <p class="drop-text">Drag & drop PDFs or images here</p>
+                    <p class="drop-hint">or <span>browse</span> to select files (PDF, JPG, PNG, WebP)</p>
+                </div>
+                <input type="file" id="mergeFileInput" accept=".pdf,application/pdf,image/jpeg,image/png,image/webp,image/gif" multiple>
+
+                <div class="file-list" id="fileList"></div>
+
+                <button class="add-more-btn" id="addMoreBtn" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5V19M5 12H19" stroke-linecap="round"/>
+                    </svg>
+                    Add more files
+                </button>
+
+                <button class="clear-all-btn" id="clearAllBtn" style="display: none;">Clear all files</button>
+
+                <div class="file-count" id="fileCount" style="display: none;">
+                    <strong id="totalFiles">0</strong> files selected • <strong id="totalSize">0 KB</strong> total
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="settings-header">
+                    <svg class="settings-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                    </svg>
+                    <span class="settings-title">Merge Options</span>
+                </div>
+
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Drag files to reorder. Files will be merged in the order shown.
+                </p>
+
+                <button class="action-btn merge-btn" id="mergeBtn" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M8 6H16M8 10H16M8 14H11M13 18L16 15M16 15L13 12M16 15H8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Merge Files
+                </button>
+
+                <div class="progress-container" id="mergeProgressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="mergeProgressFill"></div>
+                    </div>
+                    <p class="progress-text" id="mergeProgressText">Processing...</p>
+                </div>
+            </div>
+
+            <div class="card result-card" id="mergeResultCard">
+                <div class="result-header">
+                    <svg class="result-icon" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <span class="result-title">Merge Complete</span>
+                </div>
+
+                <div class="merge-result-info">
+                    <div class="pages-count" id="mergedPages">0</div>
+                    <div class="pages-label">Total Pages</div>
+                    <div class="file-size-info" id="mergedFileSize">0 KB</div>
+                </div>
+
+                <button class="download-btn" id="mergeDownloadBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 4V16M12 16L8 12M12 16L16 12" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M4 20H20" stroke-linecap="round"/>
+                    </svg>
+                    Download Merged PDF
+                </button>
+            </div>
+        </div>
+
+        <footer>
+            <p>All processing happens locally in your browser. Files are not uploaded.</p>
+        </footer>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Tab switching
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.dataset.tab;
+                
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                btn.classList.add('active');
+                document.getElementById(`${targetTab}-tab`).classList.add('active');
+            });
+        });
+
+        // Utility function
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // ============ COMPRESS TAB ============
+        const compressDropZone = document.getElementById('compressDropZone');
+        const compressFileInput = document.getElementById('compressFileInput');
+        const compressFileInfo = document.getElementById('compressFileInfo');
+        const compressFileName = document.getElementById('compressFileName');
+        const compressFileSize = document.getElementById('compressFileSize');
+        const compressRemoveFile = document.getElementById('compressRemoveFile');
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualityValue = document.getElementById('qualityValue');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const compressBtn = document.getElementById('compressBtn');
+        const compressProgressContainer = document.getElementById('compressProgressContainer');
+        const compressProgressFill = document.getElementById('compressProgressFill');
+        const compressProgressText = document.getElementById('compressProgressText');
+        const compressResultCard = document.getElementById('compressResultCard');
+        const originalSize = document.getElementById('originalSize');
+        const compressedSize = document.getElementById('compressedSize');
+        const reductionBadge = document.getElementById('reductionBadge');
+        const compressDownloadBtn = document.getElementById('compressDownloadBtn');
+
+        let compressSelectedFile = null;
+        let compressedPdfBytes = null;
+
+        compressDropZone.addEventListener('click', () => compressFileInput.click());
+
+        compressDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            compressDropZone.classList.add('drag-over');
+        });
+
+        compressDropZone.addEventListener('dragleave', () => {
+            compressDropZone.classList.remove('drag-over');
+        });
+
+        compressDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            compressDropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length && files[0].type === 'application/pdf') {
+                handleCompressFile(files[0]);
+            }
+        });
+
+        compressFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleCompressFile(e.target.files[0]);
+            }
+        });
+
+        function handleCompressFile(file) {
+            compressSelectedFile = file;
+            compressFileName.textContent = file.name;
+            compressFileSize.textContent = formatFileSize(file.size);
+            compressFileInfo.classList.add('visible');
+            compressBtn.disabled = false;
+            compressResultCard.classList.remove('visible');
+        }
+
+        compressRemoveFile.addEventListener('click', () => {
+            compressSelectedFile = null;
+            compressFileInput.value = '';
+            compressFileInfo.classList.remove('visible');
+            compressBtn.disabled = true;
+            compressResultCard.classList.remove('visible');
+        });
+
+        qualitySlider.addEventListener('input', (e) => {
+            qualityValue.textContent = e.target.value + '%';
+            updatePresetButtons(parseInt(e.target.value));
+        });
+
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const value = parseInt(btn.dataset.value);
+                qualitySlider.value = value;
+                qualityValue.textContent = value + '%';
+                updatePresetButtons(value);
+            });
+        });
+
+        function updatePresetButtons(value) {
+            presetBtns.forEach(btn => {
+                const btnValue = parseInt(btn.dataset.value);
+                btn.classList.toggle('active', Math.abs(btnValue - value) < 10);
+            });
+        }
+
+        compressBtn.addEventListener('click', compressPDF);
+
+        async function compressPDF() {
+            if (!compressSelectedFile) return;
+
+            const quality = parseInt(qualitySlider.value) / 100;
+            
+            compressBtn.disabled = true;
+            compressProgressContainer.classList.add('visible');
+            compressResultCard.classList.remove('visible');
+            compressProgressFill.style.width = '0%';
+            compressProgressText.textContent = 'Loading PDF...';
+
+            try {
+                const arrayBuffer = await compressSelectedFile.arrayBuffer();
+                compressProgressFill.style.width = '20%';
+                compressProgressText.textContent = 'Processing pages...';
+
+                const pdfDoc = await pdfjsLib.getDocument(arrayBuffer).promise;
+                const numPages = pdfDoc.numPages;
+                
+                const newPdfDoc = await PDFLib.PDFDocument.create();
+                
+                for (let i = 1; i <= numPages; i++) {
+                    const page = await pdfDoc.getPage(i);
+                    const viewport = page.getViewport({ scale: quality < 0.5 ? 1 : 1.5 });
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+
+                    const imgDataUrl = canvas.toDataURL('image/jpeg', quality);
+                    const imgBytes = await fetch(imgDataUrl).then(res => res.arrayBuffer());
+                    const img = await newPdfDoc.embedJpg(imgBytes);
+
+                    const newPage = newPdfDoc.addPage([page.getViewport({ scale: 1 }).width, page.getViewport({ scale: 1 }).height]);
+                    newPage.drawImage(img, {
+                        x: 0,
+                        y: 0,
+                        width: newPage.getWidth(),
+                        height: newPage.getHeight(),
+                    });
+
+                    const progress = 20 + (70 * (i / numPages));
+                    compressProgressFill.style.width = progress + '%';
+                    compressProgressText.textContent = `Processing page ${i} of ${numPages}...`;
+                }
+
+                compressProgressFill.style.width = '95%';
+                compressProgressText.textContent = 'Finalizing...';
+
+                compressedPdfBytes = await newPdfDoc.save();
+
+                compressProgressFill.style.width = '100%';
+                compressProgressText.textContent = 'Complete!';
+
+                const originalBytes = compressSelectedFile.size;
+                const compressedBytes = compressedPdfBytes.length;
+                const reduction = ((originalBytes - compressedBytes) / originalBytes * 100).toFixed(1);
+
+                originalSize.textContent = formatFileSize(originalBytes);
+                compressedSize.textContent = formatFileSize(compressedBytes);
+                
+                if (compressedBytes < originalBytes) {
+                    reductionBadge.textContent = `↓ ${reduction}% smaller`;
+                    reductionBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                    reductionBadge.style.color = 'var(--success)';
+                } else {
+                    reductionBadge.textContent = `File size unchanged or increased`;
+                    reductionBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+                    reductionBadge.style.color = 'var(--warning)';
+                }
+
+                setTimeout(() => {
+                    compressProgressContainer.classList.remove('visible');
+                    compressResultCard.classList.add('visible');
+                }, 500);
+
+            } catch (error) {
+                console.error('Compression error:', error);
+                compressProgressText.textContent = 'Error: ' + error.message;
+                compressProgressFill.style.background = '#ef4444';
+            }
+
+            compressBtn.disabled = false;
+        }
+
+        compressDownloadBtn.addEventListener('click', () => {
+            if (!compressedPdfBytes) return;
+
+            const blob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = compressSelectedFile.name.replace('.pdf', '_compressed.pdf');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // ============ MERGE TAB ============
+        const mergeDropZone = document.getElementById('mergeDropZone');
+        const mergeFileInput = document.getElementById('mergeFileInput');
+        const fileList = document.getElementById('fileList');
+        const addMoreBtn = document.getElementById('addMoreBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const fileCount = document.getElementById('fileCount');
+        const totalFiles = document.getElementById('totalFiles');
+        const totalSize = document.getElementById('totalSize');
+        const mergeBtn = document.getElementById('mergeBtn');
+        const mergeProgressContainer = document.getElementById('mergeProgressContainer');
+        const mergeProgressFill = document.getElementById('mergeProgressFill');
+        const mergeProgressText = document.getElementById('mergeProgressText');
+        const mergeResultCard = document.getElementById('mergeResultCard');
+        const mergedPages = document.getElementById('mergedPages');
+        const mergedFileSize = document.getElementById('mergedFileSize');
+        const mergeDownloadBtn = document.getElementById('mergeDownloadBtn');
+
+        let mergeFiles = [];
+        let mergedPdfBytes = null;
+        let draggedItem = null;
+
+        mergeDropZone.addEventListener('click', () => mergeFileInput.click());
+        addMoreBtn.addEventListener('click', () => mergeFileInput.click());
+
+        mergeDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            mergeDropZone.classList.add('drag-over');
+        });
+
+        mergeDropZone.addEventListener('dragleave', () => {
+            mergeDropZone.classList.remove('drag-over');
+        });
+
+        mergeDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            mergeDropZone.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files).filter(f => 
+                f.type === 'application/pdf' || f.type.startsWith('image/')
+            );
+            if (files.length) {
+                addMergeFiles(files);
+            }
+        });
+
+        mergeFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                addMergeFiles(Array.from(e.target.files));
+                mergeFileInput.value = '';
+            }
+        });
+
+        function addMergeFiles(files) {
+            files.forEach(file => {
+                mergeFiles.push({
+                    id: Date.now() + Math.random(),
+                    file: file,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                });
+            });
+            updateFileList();
+            updateMergeUI();
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            
+            mergeFiles.forEach((item, index) => {
+                const isImage = item.type.startsWith('image/');
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.draggable = true;
+                div.dataset.id = item.id;
+                
+                div.innerHTML = `
+                    <div class="drag-handle">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="file-number">${index + 1}</div>
+                    <div class="file-icon ${isImage ? 'image-icon' : ''}">
+                        ${isImage ? `
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                            </svg>
+                        ` : `
+                            <svg viewBox="0 0 24 24">
+                                <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM16 18H8V16H16V18ZM16 14H8V12H16V14ZM13 9V3.5L18.5 9H13Z"/>
+                            </svg>
+                        `}
+                    </div>
+                    <div class="file-details">
+                        <div class="file-name">${item.name}</div>
+                        <div class="file-meta">${formatFileSize(item.size)} • ${isImage ? 'Image' : 'PDF'}</div>
+                    </div>
+                    <button class="remove-file" data-id="${item.id}" title="Remove file">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6L18 18"/>
+                        </svg>
+                    </button>
+                `;
+
+                // Drag events
+                div.addEventListener('dragstart', handleDragStart);
+                div.addEventListener('dragend', handleDragEnd);
+                div.addEventListener('dragover', handleDragOver);
+                div.addEventListener('dragleave', handleDragLeave);
+                div.addEventListener('drop', handleDrop);
+
+                // Remove button
+                div.querySelector('.remove-file').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseFloat(e.currentTarget.dataset.id);
+                    mergeFiles = mergeFiles.filter(f => f.id !== id);
+                    updateFileList();
+                    updateMergeUI();
+                });
+
+                fileList.appendChild(div);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedItem = e.currentTarget;
+            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            draggedItem = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (draggedItem && e.currentTarget !== draggedItem) {
+                e.currentTarget.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            
+            if (!draggedItem || e.currentTarget === draggedItem) return;
+
+            const draggedId = parseFloat(draggedItem.dataset.id);
+            const targetId = parseFloat(e.currentTarget.dataset.id);
+            
+            const draggedIndex = mergeFiles.findIndex(f => f.id === draggedId);
+            const targetIndex = mergeFiles.findIndex(f => f.id === targetId);
+            
+            const [removed] = mergeFiles.splice(draggedIndex, 1);
+            mergeFiles.splice(targetIndex, 0, removed);
+            
+            updateFileList();
+        }
+
+        function updateMergeUI() {
+            const hasFiles = mergeFiles.length > 0;
+            
+            addMoreBtn.style.display = hasFiles ? 'flex' : 'none';
+            clearAllBtn.style.display = hasFiles ? 'block' : 'none';
+            fileCount.style.display = hasFiles ? 'block' : 'none';
+            mergeBtn.disabled = mergeFiles.length < 2;
+            mergeResultCard.classList.remove('visible');
+            
+            if (hasFiles) {
+                totalFiles.textContent = mergeFiles.length;
+                totalSize.textContent = formatFileSize(mergeFiles.reduce((sum, f) => sum + f.size, 0));
+            }
+        }
+
+        clearAllBtn.addEventListener('click', () => {
+            mergeFiles = [];
+            updateFileList();
+            updateMergeUI();
+        });
+
+        mergeBtn.addEventListener('click', mergePDFs);
+
+        async function mergePDFs() {
+            if (mergeFiles.length < 2) return;
+
+            mergeBtn.disabled = true;
+            mergeProgressContainer.classList.add('visible');
+            mergeResultCard.classList.remove('visible');
+            mergeProgressFill.style.width = '0%';
+            mergeProgressText.textContent = 'Starting merge...';
+
+            try {
+                const mergedPdf = await PDFLib.PDFDocument.create();
+                let totalPagesCount = 0;
+
+                for (let i = 0; i < mergeFiles.length; i++) {
+                    const item = mergeFiles[i];
+                    const progress = ((i + 1) / mergeFiles.length) * 90;
+                    mergeProgressFill.style.width = progress + '%';
+                    mergeProgressText.textContent = `Processing ${item.name}...`;
+
+                    const arrayBuffer = await item.file.arrayBuffer();
+
+                    if (item.type === 'application/pdf') {
+                        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                        const pages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+                        pages.forEach(page => {
+                            mergedPdf.addPage(page);
+                            totalPagesCount++;
+                        });
+                    } else {
+                        // Handle images
+                        let img;
+                        if (item.type === 'image/jpeg') {
+                            img = await mergedPdf.embedJpg(arrayBuffer);
+                        } else if (item.type === 'image/png') {
+                            img = await mergedPdf.embedPng(arrayBuffer);
+                        } else {
+                            // Convert other image types to PNG via canvas
+                            const blob = new Blob([arrayBuffer], { type: item.type });
+                            const imgUrl = URL.createObjectURL(blob);
+                            const imgEl = new Image();
+                            await new Promise((resolve, reject) => {
+                                imgEl.onload = resolve;
+                                imgEl.onerror = reject;
+                                imgEl.src = imgUrl;
+                            });
+                            
+                            const canvas = document.createElement('canvas');
+                            canvas.width = imgEl.width;
+                            canvas.height = imgEl.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(imgEl, 0, 0);
+                            
+                            const pngDataUrl = canvas.toDataURL('image/png');
+                            const pngData = await fetch(pngDataUrl).then(r => r.arrayBuffer());
+                            img = await mergedPdf.embedPng(pngData);
+                            
+                            URL.revokeObjectURL(imgUrl);
+                        }
+
+                        const imgDims = img.scale(1);
+                        const page = mergedPdf.addPage([imgDims.width, imgDims.height]);
+                        page.drawImage(img, {
+                            x: 0,
+                            y: 0,
+                            width: imgDims.width,
+                            height: imgDims.height,
+                        });
+                        totalPagesCount++;
+                    }
+                }
+
+                mergeProgressFill.style.width = '95%';
+                mergeProgressText.textContent = 'Finalizing...';
+
+                mergedPdfBytes = await mergedPdf.save();
+
+                mergeProgressFill.style.width = '100%';
+                mergeProgressText.textContent = 'Complete!';
+
+                mergedPages.textContent = totalPagesCount;
+                mergedFileSize.textContent = formatFileSize(mergedPdfBytes.length);
+
+                setTimeout(() => {
+                    mergeProgressContainer.classList.remove('visible');
+                    mergeResultCard.classList.add('visible');
+                }, 500);
+
+            } catch (error) {
+                console.error('Merge error:', error);
+                mergeProgressText.textContent = 'Error: ' + error.message;
+                mergeProgressFill.style.background = '#ef4444';
+            }
+
+            mergeBtn.disabled = false;
+        }
+
+        mergeDownloadBtn.addEventListener('click', () => {
+            if (!mergedPdfBytes) return;
+
+            const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'merged_document.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
